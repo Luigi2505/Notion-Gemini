@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notion → Gemini</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #0f0f11;
+      --surface:    #18181c;
+      --surface2:   #1e1e24;
+      --border:     #2a2a32;
+      --accent:     #7c6fff;
+      --accent-dim: #2d2860;
+      --urgent:     #ff6b6b;
+      --urgent-bg:  #2a1515;
+      --text:       #e8e8f0;
+      --muted:      #6b6b7e;
+      --success:    #4ade80;
+      --warning:    #fbbf24;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* Layout */
+    .layout { display: flex; min-height: 100vh; }
+
+    .sidebar {
+      width: 240px;
+      flex-shrink: 0;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 1.5rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .sidebar-logo {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--accent);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      padding: 0 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .sidebar-label {
+      font-size: 0.65rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 0 0.5rem;
+      margin: 1rem 0 0.25rem;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.5rem 0.75rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      color: var(--muted);
+      transition: all 0.15s;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+    }
+    .nav-item:hover { background: var(--surface2); color: var(--text); }
+    .nav-item.active { background: var(--accent-dim); color: var(--accent); }
+    .nav-item .dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--urgent);
+      margin-left: auto;
+    }
+
+    .sidebar-bottom {
+      margin-top: auto;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .btn-atualizar {
+      width: 100%;
+      padding: 0.6rem;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.15s;
+    }
+    .btn-atualizar:hover { background: #9488ff; }
+    .btn-atualizar:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .meta-sidebar {
+      font-size: 0.7rem;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      margin-top: 0.5rem;
+      text-align: center;
+    }
+
+    /* Main */
+    .main {
+      flex: 1;
+      padding: 2rem;
+      overflow-y: auto;
+      max-width: 900px;
+    }
+
+    .section { display: none; }
+    .section.ativa { display: block; }
+
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      letter-spacing: -0.02em;
+    }
+
+    /* Sugestão do dia */
+    .sugestao-box {
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+      border: 1px solid var(--accent-dim);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+    .sugestao-label {
+      font-size: 0.7rem;
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.5rem;
+    }
+    .sugestao-texto {
+      font-size: 0.9rem;
+      line-height: 1.6;
+      color: #c8c8e0;
+      white-space: pre-wrap;
+    }
+
+    /* Resumo ollama */
+    .resumo-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+    .resumo-label {
+      font-size: 0.7rem;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.5rem;
+    }
+    .resumo-texto {
+      font-size: 0.875rem;
+      line-height: 1.6;
+      color: var(--text);
+      white-space: pre-wrap;
+    }
+
+    /* Cards */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      transition: border-color 0.15s;
+    }
+    .card:hover { border-color: #3a3a48; }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 0.75rem;
+    }
+    .card-titulo {
+      font-size: 0.8rem;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .urgent-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--urgent);
+      margin-left: auto;
+    }
+
+    .item {
+      font-size: 0.825rem;
+      line-height: 1.5;
+      color: #c0c0d0;
+      padding: 0.25rem 0.4rem;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .item.nivel-1 { padding-left: 1.25rem; opacity: 0.75; }
+    .item.nivel-2 { padding-left: 2rem; opacity: 0.6; }
+    .vazio { font-size: 0.8rem; color: var(--muted); font-style: italic; padding: 0.25rem 0.4rem; }
+
+    /* Copiar */
+    .copy-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+    }
+    .copy-label {
+      font-size: 0.7rem;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .filtros {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.75rem;
+    }
+    .filtro-btn {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.75rem;
+      padding: 0.3rem 0.75rem;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .filtro-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .filtro-btn.ativo { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+
+    textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      line-height: 1.6;
+      padding: 0.75rem;
+      resize: vertical;
+      min-height: 120px;
+      outline: none;
+      margin-bottom: 0.75rem;
+    }
+
+    .btn-copy {
+      width: 100%;
+      padding: 0.7rem;
+      background: var(--accent-dim);
+      color: var(--accent);
+      border: 1px solid var(--accent-dim);
+      border-radius: 8px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-copy:hover { background: var(--accent); color: #fff; }
+    .btn-copy.copiado { background: #1a3a25; color: var(--success); border-color: #1a3a25; }
+
+    /* Nota rápida */
+    .nota-form {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+    }
+    .nota-row {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .nota-select {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.85rem;
+      padding: 0.55rem 0.75rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      outline: none;
+      cursor: pointer;
+    }
+    .nota-input {
+      flex: 1;
+      min-width: 200px;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.875rem;
+      padding: 0.55rem 0.75rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      outline: none;
+    }
+    .nota-input:focus { border-color: var(--accent); }
+    .btn-nota {
+      font-family: 'Inter', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 500;
+      padding: 0.55rem 1.1rem;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .btn-nota:hover { background: #9488ff; }
+    .nota-feedback { font-size: 0.8rem; color: var(--success); margin-top: 0.5rem; display: none; }
+
+    /* Diário */
+    .diario-entry {
+      border-left: 2px solid var(--border);
+      padding-left: 1rem;
+      margin-bottom: 1rem;
+    }
+    .diario-data {
+      font-size: 0.75rem;
+      color: var(--accent);
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 0.4rem;
+    }
+    .diario-item {
+      font-size: 0.875rem;
+      color: #c0c0d0;
+      line-height: 1.6;
+      padding: 0.1rem 0;
+    }
+
+    /* Histórico */
+    .historico-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+    .historico-item:hover { border-color: var(--accent); }
+    .historico-data {
+      font-size: 0.75rem;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      margin-bottom: 0.35rem;
+    }
+    .historico-preview {
+      font-size: 0.8rem;
+      color: #909099;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Loading */
+    .spinner {
+      display: inline-block;
+      width: 12px; height: 12px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .processing-bar {
+      background: var(--accent-dim);
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+      padding: 0.6rem 1rem;
+      font-size: 0.8rem;
+      color: var(--accent);
+      margin-bottom: 1rem;
+      display: none;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .processing-bar.visivel { display: flex; }
+
+    .empty { color: var(--muted); font-size: 0.875rem; font-style: italic; padding: 2rem 0; }
+  </style>
+</head>
+<body>
+
+<div class="layout">
+  <!-- Sidebar -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">notion → gemini</div>
+
+    <div class="sidebar-label">Visão Geral</div>
+    <button class="nav-item active" onclick="navegar('home')">🏠 Início</button>
+    <button class="nav-item" onclick="navegar('copiar')">📋 Copiar Contexto</button>
+
+    <div class="sidebar-label">Categorias</div>
+    <button class="nav-item" onclick="navegar('faculdade')">🎓 Faculdade</button>
+    <button class="nav-item" onclick="navegar('pessoal')">👤 Pessoal</button>
+    <button class="nav-item" onclick="navegar('academia')">💪 Academia</button>
+    <button class="nav-item" onclick="navegar('projetos')">🚀 Projetos</button>
+    <button class="nav-item" onclick="navegar('diario')">📓 Diário</button>
+
+    <div class="sidebar-label">Ferramentas</div>
+    <button class="nav-item" onclick="navegar('nota')">✏️ Nota Rápida</button>
+    <button class="nav-item" onclick="navegar('historico')">🕐 Histórico</button>
+
+    <div class="sidebar-bottom">
+      <button class="btn-atualizar" id="btn-atualizar" onclick="atualizar()">↻ Atualizar</button>
+      <div class="meta-sidebar" id="meta-sidebar">—</div>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- HOME -->
+    <div class="section ativa" id="sec-home">
+      <div class="processing-bar" id="processing-bar">
+        <span class="spinner"></span> Processando com Ollama, aguarde...
+      </div>
+
+      <div class="sugestao-box" id="sugestao-box" style="display:none">
+        <div class="sugestao-label">✨ Sugestão para hoje</div>
+        <div class="sugestao-texto" id="sugestao-texto"></div>
+      </div>
+
+      <div class="resumo-box" id="resumo-box" style="display:none">
+        <div class="resumo-label">🧠 Resumo inteligente (Ollama)</div>
+        <div class="resumo-texto" id="resumo-texto"></div>
+      </div>
+
+      <div class="grid" id="grid-home"></div>
+    </div>
+
+    <!-- COPIAR -->
+    <div class="section" id="sec-copiar">
+      <div class="section-title">Copiar Contexto</div>
+      <div class="copy-section">
+        <div class="copy-label">Filtrar por categoria</div>
+        <div class="filtros">
+          <button class="filtro-btn ativo" onclick="setFiltro(null, this)">Tudo</button>
+          <button class="filtro-btn" onclick="setFiltro('Faculdade', this)">🎓 Faculdade</button>
+          <button class="filtro-btn" onclick="setFiltro('Pessoal', this)">👤 Pessoal</button>
+          <button class="filtro-btn" onclick="setFiltro('Academia', this)">💪 Academia</button>
+          <button class="filtro-btn" onclick="setFiltro('Projetos', this)">🚀 Projetos</button>
+        </div>
+        <textarea id="texto-copia" readonly></textarea>
+        <button class="btn-copy" id="btn-copy" onclick="copiar()">📋 Copiar para o Gemini</button>
+      </div>
+    </div>
+
+    <!-- CATEGORIA INDIVIDUAL -->
+    <div class="section" id="sec-faculdade"><div class="section-title">🎓 Faculdade</div><div id="itens-faculdade"></div></div>
+    <div class="section" id="sec-pessoal"><div class="section-title">👤 Pessoal</div><div id="itens-pessoal"></div></div>
+    <div class="section" id="sec-academia"><div class="section-title">💪 Academia</div><div id="itens-academia"></div></div>
+    <div class="section" id="sec-projetos"><div class="section-title">🚀 Projetos</div><div id="itens-projetos"></div></div>
+
+    <!-- DIÁRIO -->
+    <div class="section" id="sec-diario">
+      <div class="section-title">📓 Diário — últimos 7 dias</div>
+      <div id="diario-conteudo"></div>
+    </div>
+
+    <!-- NOTA RÁPIDA -->
+    <div class="section" id="sec-nota">
+      <div class="section-title">✏️ Nota Rápida</div>
+      <div class="nota-form">
+        <div class="nota-row">
+          <select class="nota-select" id="nota-pagina">
+            <option value="Faculdade">🎓 Faculdade</option>
+            <option value="Pessoal">👤 Pessoal</option>
+            <option value="Academia">💪 Academia</option>
+            <option value="Projetos">🚀 Projetos</option>
+          </select>
+          <input class="nota-input" id="nota-texto" type="text" placeholder="Digite a nota e pressione Enter...">
+          <button class="btn-nota" onclick="adicionarNota()">Adicionar</button>
+        </div>
+        <div class="nota-feedback" id="nota-feedback">✅ Nota adicionada no Notion!</div>
+      </div>
+    </div>
+
+    <!-- HISTÓRICO -->
+    <div class="section" id="sec-historico">
+      <div class="section-title">🕐 Histórico de Contextos</div>
+      <div id="historico-lista"></div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  let estado = null;
+  let filtroAtual = null;
+  let secaoAtual = 'home';
+
+  // ── Navegação ──
+  function navegar(sec) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('ativa'));
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    document.getElementById('sec-' + sec).classList.add('ativa');
+    event.currentTarget.classList.add('active');
+    secaoAtual = sec;
+
+    if (sec === 'historico') carregarHistorico();
+    if (sec === 'copiar') atualizarTextoCopia();
+  }
+
+  // ── Carregar estado ──
+  async function carregar() {
+    try {
+      const res = await fetch('/api/estado');
+      estado = await res.json();
+      renderizar();
+    } catch(e) {
+      console.error(e);
+    }
+  }
+
+  function renderizar() {
+    if (!estado) return;
+
+    // meta
+    document.getElementById('meta-sidebar').textContent = estado.data || '—';
+
+    // processing
+    const pb = document.getElementById('processing-bar');
+    if (estado.processando) {
+      pb.classList.add('visivel');
+      setTimeout(carregar, 2000);
+    } else {
+      pb.classList.remove('visivel');
+    }
+
+    // sugestão
+    if (estado.sugestao_dia) {
+      document.getElementById('sugestao-box').style.display = 'block';
+      document.getElementById('sugestao-texto').textContent = estado.sugestao_dia;
+    }
+
+    // resumo
+    if (estado.resumo_ollama) {
+      document.getElementById('resumo-box').style.display = 'block';
+      document.getElementById('resumo-texto').textContent = estado.resumo_ollama;
+    }
+
+    // grid home
+    const grid = document.getElementById('grid-home');
+    grid.innerHTML = '';
+    for (const [nome, dados] of Object.entries(estado.paginas)) {
+      grid.appendChild(criarCard(nome, dados));
+    }
+
+    // seções individuais
+    for (const [nome, dados] of Object.entries(estado.paginas)) {
+      const el = document.getElementById('itens-' + nome.toLowerCase());
+      if (!el) continue;
+      el.innerHTML = '';
+      if (!dados.itens.length) {
+        el.innerHTML = '<div class="empty">Nenhuma nota encontrada.</div>';
+      } else {
+        dados.itens.forEach(item => {
+          const d = document.createElement('div');
+          d.className = 'item' + (item.nivel > 0 ? ` nivel-${item.nivel}` : '');
+          d.textContent = item.texto;
+          el.appendChild(d);
+        });
+      }
+    }
+
+    // diário
+    const dc = document.getElementById('diario-conteudo');
+    dc.innerHTML = '';
+    if (!estado.diario || !estado.diario.length) {
+      dc.innerHTML = '<div class="empty">Nenhuma entrada encontrada nos últimos 7 dias.<br>Crie a página "Diário" no Notion e adicione o ID no .env</div>';
+    } else {
+      let dataAtual = null;
+      let entryEl = null;
+      estado.diario.forEach(e => {
+        if (e.data !== dataAtual) {
+          entryEl = document.createElement('div');
+          entryEl.className = 'diario-entry';
+          entryEl.innerHTML = `<div class="diario-data">${e.data}</div>`;
+          dc.appendChild(entryEl);
+          dataAtual = e.data;
+        }
+        const item = document.createElement('div');
+        item.className = 'diario-item';
+        item.textContent = e.texto;
+        entryEl.appendChild(item);
+      });
+    }
+
+    if (secaoAtual === 'copiar') atualizarTextoCopia();
+  }
+
+  function criarCard(nome, dados) {
+    const card = document.createElement('div');
+    card.className = 'card';
+    let itensHtml = dados.itens.length
+      ? dados.itens.map(i => `<div class="item${i.nivel > 0 ? ` nivel-${i.nivel}` : ''}">${esc(i.texto)}</div>`).join('')
+      : '<div class="vazio">sem conteúdo</div>';
+
+    card.innerHTML = `
+      <div class="card-header">
+        <span>${dados.icone}</span>
+        <span class="card-titulo">${nome}</span>
+      </div>
+      <div>${itensHtml}</div>`;
+    return card;
+  }
+
+  // ── Filtros e cópia ──
+  let filtroTexto = null;
+
+  async function setFiltro(cat, btn) {
+    document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('ativo'));
+    btn.classList.add('ativo');
+    filtroAtual = cat;
+    atualizarTextoCopia();
+  }
+
+  async function atualizarTextoCopia() {
+    const url = filtroAtual ? `/api/copiar?filtro=${filtroAtual}` : '/api/copiar';
+    const res = await fetch(url);
+    const data = await res.json();
+    document.getElementById('texto-copia').value = data.texto;
+    filtroTexto = data.texto;
+  }
+
+  function copiar() {
+    const texto = document.getElementById('texto-copia').value;
+    navigator.clipboard.writeText(texto).then(() => {
+      const btn = document.getElementById('btn-copy');
+      btn.textContent = '✅ Copiado!';
+      btn.classList.add('copiado');
+      setTimeout(() => {
+        btn.textContent = '📋 Copiar para o Gemini';
+        btn.classList.remove('copiado');
+      }, 2000);
+    });
+  }
+
+  // ── Atualizar ──
+  async function atualizar() {
+    const btn = document.getElementById('btn-atualizar');
+    btn.disabled = true;
+    btn.textContent = '⏳ Processando...';
+    document.getElementById('processing-bar').classList.add('visivel');
+    await fetch('/api/atualizar', { method: 'POST' });
+    setTimeout(async () => {
+      await carregar();
+      btn.disabled = false;
+      btn.textContent = '↻ Atualizar';
+    }, 3000);
+  }
+
+  // ── Nota rápida ──
+  async function adicionarNota() {
+    const texto = document.getElementById('nota-texto').value.trim();
+    const pagina = document.getElementById('nota-pagina').value;
+    if (!texto) return;
+
+    const res = await fetch('/api/nota', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ texto, pagina })
+    });
+    const data = await res.json();
+
+    const fb = document.getElementById('nota-feedback');
+    if (data.ok) {
+      fb.textContent = '✅ Nota adicionada no Notion!';
+      fb.style.color = 'var(--success)';
+      document.getElementById('nota-texto').value = '';
+    } else {
+      fb.textContent = '❌ Erro ao adicionar nota.';
+      fb.style.color = 'var(--urgent)';
+    }
+    fb.style.display = 'block';
+    setTimeout(() => fb.style.display = 'none', 3000);
+  }
+
+  document.getElementById('nota-texto').addEventListener('keydown', e => {
+    if (e.key === 'Enter') adicionarNota();
+  });
+
+  // ── Histórico ──
+  async function carregarHistorico() {
+    const res = await fetch('/api/historico');
+    const lista = await res.json();
+    const el = document.getElementById('historico-lista');
+    el.innerHTML = '';
+
+    if (!lista.length) {
+      el.innerHTML = '<div class="empty">Nenhum histórico ainda.</div>';
+      return;
+    }
+
+    lista.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'historico-item';
+      div.innerHTML = `
+        <div class="historico-data">${item.data}</div>
+        <div class="historico-preview">${esc(item.texto.slice(0, 120))}...</div>`;
+      div.onclick = () => {
+        navigator.clipboard.writeText(item.texto);
+        div.style.borderColor = 'var(--success)';
+        setTimeout(() => div.style.borderColor = '', 1500);
+      };
+      el.appendChild(div);
+    });
+  }
+
+  function esc(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  carregar();
+</script>
+</body>
+</html>
