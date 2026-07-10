@@ -20,7 +20,6 @@
       --text:       #e8e8f0;
       --muted:      #6b6b7e;
       --success:    #4ade80;
-      --warning:    #fbbf24;
     }
 
     body {
@@ -30,9 +29,9 @@
       min-height: 100vh;
     }
 
-    /* Layout */
     .layout { display: flex; min-height: 100vh; }
 
+    /* Sidebar */
     .sidebar {
       width: 240px;
       flex-shrink: 0;
@@ -84,17 +83,14 @@
     }
     .nav-item:hover { background: var(--surface2); color: var(--text); }
     .nav-item.active { background: var(--accent-dim); color: var(--accent); }
-    .nav-item .dot {
-      width: 5px; height: 5px;
-      border-radius: 50%;
-      background: var(--urgent);
-      margin-left: auto;
-    }
 
     .sidebar-bottom {
       margin-top: auto;
       padding-top: 1rem;
       border-top: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
     }
 
     .btn-atualizar {
@@ -113,21 +109,32 @@
     .btn-atualizar:hover { background: #9488ff; }
     .btn-atualizar:disabled { opacity: 0.5; cursor: not-allowed; }
 
+    .btn-logout {
+      width: 100%;
+      padding: 0.6rem;
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.15s;
+      text-decoration: none;
+      text-align: center;
+      display: block;
+    }
+    .btn-logout:hover { color: var(--urgent); border-color: var(--urgent); }
+
     .meta-sidebar {
       font-size: 0.7rem;
       color: var(--muted);
       font-family: 'JetBrains Mono', monospace;
-      margin-top: 0.5rem;
       text-align: center;
     }
 
     /* Main */
-    .main {
-      flex: 1;
-      padding: 2rem;
-      overflow-y: auto;
-      max-width: 900px;
-    }
+    .main { flex: 1; padding: 2rem; overflow-y: auto; max-width: 900px; }
 
     .section { display: none; }
     .section.ativa { display: block; }
@@ -139,7 +146,7 @@
       letter-spacing: -0.02em;
     }
 
-    /* Sugestão do dia */
+    /* Sugestão */
     .sugestao-box {
       background: linear-gradient(135deg, #1a1a2e, #16213e);
       border: 1px solid var(--accent-dim);
@@ -162,7 +169,7 @@
       white-space: pre-wrap;
     }
 
-    /* Resumo ollama */
+    /* Resumo */
     .resumo-box {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -215,12 +222,6 @@
       text-transform: uppercase;
       color: var(--muted);
     }
-    .urgent-dot {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: var(--urgent);
-      margin-left: auto;
-    }
 
     .item {
       font-size: 0.825rem;
@@ -249,9 +250,6 @@
       text-transform: uppercase;
       letter-spacing: 0.1em;
       margin-bottom: 0.75rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
     }
     .filtros {
       display: flex;
@@ -355,7 +353,7 @@
       transition: all 0.15s;
     }
     .btn-nota:hover { background: #9488ff; }
-    .nota-feedback { font-size: 0.8rem; color: var(--success); margin-top: 0.5rem; display: none; }
+    .nota-feedback { font-size: 0.8rem; margin-top: 0.5rem; display: none; }
 
     /* Diário */
     .diario-entry {
@@ -373,7 +371,6 @@
       font-size: 0.875rem;
       color: #c0c0d0;
       line-height: 1.6;
-      padding: 0.1rem 0;
     }
 
     /* Histórico */
@@ -430,52 +427,46 @@
   </style>
 </head>
 <body>
-
 <div class="layout">
-  <!-- Sidebar -->
   <nav class="sidebar">
     <div class="sidebar-logo">notion → gemini</div>
 
     <div class="sidebar-label">Visão Geral</div>
-    <button class="nav-item active" onclick="navegar('home')">🏠 Início</button>
-    <button class="nav-item" onclick="navegar('copiar')">📋 Copiar Contexto</button>
+    <button class="nav-item active" onclick="navegar('home', this)">🏠 Início</button>
+    <button class="nav-item" onclick="navegar('copiar', this)">📋 Copiar Contexto</button>
 
     <div class="sidebar-label">Categorias</div>
-    <button class="nav-item" onclick="navegar('faculdade')">🎓 Faculdade</button>
-    <button class="nav-item" onclick="navegar('pessoal')">👤 Pessoal</button>
-    <button class="nav-item" onclick="navegar('academia')">💪 Academia</button>
-    <button class="nav-item" onclick="navegar('projetos')">🚀 Projetos</button>
-    <button class="nav-item" onclick="navegar('diario')">📓 Diário</button>
+    <button class="nav-item" onclick="navegar('faculdade', this)">🎓 Faculdade</button>
+    <button class="nav-item" onclick="navegar('pessoal', this)">👤 Pessoal</button>
+    <button class="nav-item" onclick="navegar('academia', this)">💪 Academia</button>
+    <button class="nav-item" onclick="navegar('projetos', this)">🚀 Projetos</button>
+    <button class="nav-item" onclick="navegar('diario', this)">📓 Diário</button>
 
     <div class="sidebar-label">Ferramentas</div>
-    <button class="nav-item" onclick="navegar('nota')">✏️ Nota Rápida</button>
-    <button class="nav-item" onclick="navegar('historico')">🕐 Histórico</button>
+    <button class="nav-item" onclick="navegar('nota', this)">✏️ Nota Rápida</button>
+    <button class="nav-item" onclick="navegar('historico', this)">🕐 Histórico</button>
 
     <div class="sidebar-bottom">
       <button class="btn-atualizar" id="btn-atualizar" onclick="atualizar()">↻ Atualizar</button>
+      <a href="/logout" class="btn-logout">Sair</a>
       <div class="meta-sidebar" id="meta-sidebar">—</div>
     </div>
   </nav>
 
-  <!-- Main -->
   <main class="main">
-
     <!-- HOME -->
     <div class="section ativa" id="sec-home">
       <div class="processing-bar" id="processing-bar">
-        <span class="spinner"></span> Processando com Ollama, aguarde...
+        <span class="spinner"></span> Processando com Gemini, aguarde...
       </div>
-
       <div class="sugestao-box" id="sugestao-box" style="display:none">
         <div class="sugestao-label">✨ Sugestão para hoje</div>
         <div class="sugestao-texto" id="sugestao-texto"></div>
       </div>
-
       <div class="resumo-box" id="resumo-box" style="display:none">
-        <div class="resumo-label">🧠 Resumo inteligente (Ollama)</div>
+        <div class="resumo-label">🧠 Resumo inteligente (Gemini)</div>
         <div class="resumo-texto" id="resumo-texto"></div>
       </div>
-
       <div class="grid" id="grid-home"></div>
     </div>
 
@@ -496,7 +487,7 @@
       </div>
     </div>
 
-    <!-- CATEGORIA INDIVIDUAL -->
+    <!-- CATEGORIAS -->
     <div class="section" id="sec-faculdade"><div class="section-title">🎓 Faculdade</div><div id="itens-faculdade"></div></div>
     <div class="section" id="sec-pessoal"><div class="section-title">👤 Pessoal</div><div id="itens-pessoal"></div></div>
     <div class="section" id="sec-academia"><div class="section-title">💪 Academia</div><div id="itens-academia"></div></div>
@@ -522,7 +513,7 @@
           <input class="nota-input" id="nota-texto" type="text" placeholder="Digite a nota e pressione Enter...">
           <button class="btn-nota" onclick="adicionarNota()">Adicionar</button>
         </div>
-        <div class="nota-feedback" id="nota-feedback">✅ Nota adicionada no Notion!</div>
+        <div class="nota-feedback" id="nota-feedback"></div>
       </div>
     </div>
 
@@ -531,45 +522,37 @@
       <div class="section-title">🕐 Histórico de Contextos</div>
       <div id="historico-lista"></div>
     </div>
-
   </main>
 </div>
 
 <script>
   let estado = null;
-  let filtroAtual = null;
   let secaoAtual = 'home';
+  let filtroAtual = null;
 
-  // ── Navegação ──
-  function navegar(sec) {
+  function navegar(sec, btn) {
     document.querySelectorAll('.section').forEach(s => s.classList.remove('ativa'));
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
     document.getElementById('sec-' + sec).classList.add('ativa');
-    event.currentTarget.classList.add('active');
+    btn.classList.add('active');
     secaoAtual = sec;
-
     if (sec === 'historico') carregarHistorico();
     if (sec === 'copiar') atualizarTextoCopia();
   }
 
-  // ── Carregar estado ──
   async function carregar() {
     try {
       const res = await fetch('/api/estado');
       estado = await res.json();
       renderizar();
-    } catch(e) {
-      console.error(e);
-    }
+    } catch(e) { console.error(e); }
   }
 
   function renderizar() {
     if (!estado) return;
 
-    // meta
     document.getElementById('meta-sidebar').textContent = estado.data || '—';
 
-    // processing
     const pb = document.getElementById('processing-bar');
     if (estado.processando) {
       pb.classList.add('visivel');
@@ -578,50 +561,35 @@
       pb.classList.remove('visivel');
     }
 
-    // sugestão
-    if (estado.sugestao_dia) {
+    if (estado.sugestao) {
       document.getElementById('sugestao-box').style.display = 'block';
-      document.getElementById('sugestao-texto').textContent = estado.sugestao_dia;
+      document.getElementById('sugestao-texto').textContent = estado.sugestao;
     }
-
-    // resumo
-    if (estado.resumo_ollama) {
+    if (estado.resumo) {
       document.getElementById('resumo-box').style.display = 'block';
-      document.getElementById('resumo-texto').textContent = estado.resumo_ollama;
+      document.getElementById('resumo-texto').textContent = estado.resumo;
     }
 
-    // grid home
     const grid = document.getElementById('grid-home');
     grid.innerHTML = '';
     for (const [nome, dados] of Object.entries(estado.paginas)) {
       grid.appendChild(criarCard(nome, dados));
     }
 
-    // seções individuais
     for (const [nome, dados] of Object.entries(estado.paginas)) {
       const el = document.getElementById('itens-' + nome.toLowerCase());
       if (!el) continue;
-      el.innerHTML = '';
-      if (!dados.itens.length) {
-        el.innerHTML = '<div class="empty">Nenhuma nota encontrada.</div>';
-      } else {
-        dados.itens.forEach(item => {
-          const d = document.createElement('div');
-          d.className = 'item' + (item.nivel > 0 ? ` nivel-${item.nivel}` : '');
-          d.textContent = item.texto;
-          el.appendChild(d);
-        });
-      }
+      el.innerHTML = dados.itens.length
+        ? dados.itens.map(i => `<div class="item${i.nivel > 0 ? ` nivel-${i.nivel}` : ''}">${esc(i.texto)}</div>`).join('')
+        : '<div class="empty">Nenhuma nota encontrada.</div>';
     }
 
-    // diário
     const dc = document.getElementById('diario-conteudo');
     dc.innerHTML = '';
     if (!estado.diario || !estado.diario.length) {
-      dc.innerHTML = '<div class="empty">Nenhuma entrada encontrada nos últimos 7 dias.<br>Crie a página "Diário" no Notion e adicione o ID no .env</div>';
+      dc.innerHTML = '<div class="empty">Nenhuma entrada nos últimos 7 dias.<br>Crie a página "Diário" no Notion e adicione o ID no .env</div>';
     } else {
-      let dataAtual = null;
-      let entryEl = null;
+      let dataAtual = null, entryEl = null;
       estado.diario.forEach(e => {
         if (e.data !== dataAtual) {
           entryEl = document.createElement('div');
@@ -643,21 +611,17 @@
   function criarCard(nome, dados) {
     const card = document.createElement('div');
     card.className = 'card';
-    let itensHtml = dados.itens.length
-      ? dados.itens.map(i => `<div class="item${i.nivel > 0 ? ` nivel-${i.nivel}` : ''}">${esc(i.texto)}</div>`).join('')
-      : '<div class="vazio">sem conteúdo</div>';
-
     card.innerHTML = `
       <div class="card-header">
         <span>${dados.icone}</span>
         <span class="card-titulo">${nome}</span>
       </div>
-      <div>${itensHtml}</div>`;
+      <div>${dados.itens.length
+        ? dados.itens.map(i => `<div class="item${i.nivel > 0 ? ` nivel-${i.nivel}` : ''}">${esc(i.texto)}</div>`).join('')
+        : '<div class="vazio">sem conteúdo</div>'
+      }</div>`;
     return card;
   }
-
-  // ── Filtros e cópia ──
-  let filtroTexto = null;
 
   async function setFiltro(cat, btn) {
     document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('ativo'));
@@ -671,7 +635,6 @@
     const res = await fetch(url);
     const data = await res.json();
     document.getElementById('texto-copia').value = data.texto;
-    filtroTexto = data.texto;
   }
 
   function copiar() {
@@ -687,7 +650,6 @@
     });
   }
 
-  // ── Atualizar ──
   async function atualizar() {
     const btn = document.getElementById('btn-atualizar');
     btn.disabled = true;
@@ -701,7 +663,6 @@
     }, 3000);
   }
 
-  // ── Nota rápida ──
   async function adicionarNota() {
     const texto = document.getElementById('nota-texto').value.trim();
     const pagina = document.getElementById('nota-pagina').value;
@@ -713,36 +674,29 @@
       body: JSON.stringify({ texto, pagina })
     });
     const data = await res.json();
-
     const fb = document.getElementById('nota-feedback');
-    if (data.ok) {
-      fb.textContent = '✅ Nota adicionada no Notion!';
-      fb.style.color = 'var(--success)';
-      document.getElementById('nota-texto').value = '';
-    } else {
-      fb.textContent = '❌ Erro ao adicionar nota.';
-      fb.style.color = 'var(--urgent)';
-    }
+    fb.textContent = data.ok ? '✅ Nota adicionada no Notion!' : '❌ Erro ao adicionar nota.';
+    fb.style.color = data.ok ? 'var(--success)' : 'var(--urgent)';
     fb.style.display = 'block';
+    if (data.ok) document.getElementById('nota-texto').value = '';
     setTimeout(() => fb.style.display = 'none', 3000);
   }
 
-  document.getElementById('nota-texto').addEventListener('keydown', e => {
-    if (e.key === 'Enter') adicionarNota();
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('nota-texto').addEventListener('keydown', e => {
+      if (e.key === 'Enter') adicionarNota();
+    });
   });
 
-  // ── Histórico ──
   async function carregarHistorico() {
     const res = await fetch('/api/historico');
     const lista = await res.json();
     const el = document.getElementById('historico-lista');
     el.innerHTML = '';
-
     if (!lista.length) {
       el.innerHTML = '<div class="empty">Nenhum histórico ainda.</div>';
       return;
     }
-
     lista.forEach(item => {
       const div = document.createElement('div');
       div.className = 'historico-item';

@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: notion-gemini
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: NOTION_TOKEN
+        sync: false
+      - key: NOTION_DIARIO_ID
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: APP_PASSWORD
+        sync: false
+      - key: SECRET_KEY
+        sync: false

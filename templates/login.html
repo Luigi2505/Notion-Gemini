@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — Notion Jarvis</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #0f0f11;
+      --surface: #18181c;
+      --border:  #2a2a32;
+      --accent:  #7c6fff;
+      --text:    #e8e8f0;
+      --muted:   #6b6b7e;
+      --urgent:  #ff6b6b;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2.5rem 2rem;
+      width: 100%;
+      max-width: 360px;
+    }
+
+    .logo {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--accent);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+
+    h1 {
+      font-size: 1.4rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      margin-bottom: 2rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 0.4rem;
+    }
+
+    input[type="password"] {
+      width: 100%;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+      padding: 0.65rem 0.85rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      outline: none;
+      margin-bottom: 1.25rem;
+      transition: border-color 0.15s;
+    }
+    input[type="password"]:focus { border-color: var(--accent); }
+
+    .erro {
+      font-size: 0.8rem;
+      color: var(--urgent);
+      margin-bottom: 1rem;
+    }
+
+    button {
+      width: 100%;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      padding: 0.7rem;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    button:hover { background: #9488ff; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo">notion → gemini</div>
+    <h1>Entrar</h1>
+    {% if erro %}
+      <div class="erro">{{ erro }}</div>
+    {% endif %}
+    <form method="POST">
+      <label>Senha</label>
+      <input type="password" name="senha" autofocus placeholder="••••••••">
+      <button type="submit">Entrar</button>
+    </form>
+  </div>
+</body>
+</html>
